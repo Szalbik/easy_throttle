@@ -34,7 +34,7 @@ class Throttler
       end
     end
     result
-  rescue *config['errors'].map(&:constantize) => e
+  rescue StandardError => e
     if e.code == 429
       extend_key_duration
       retry
@@ -46,7 +46,7 @@ class Throttler
       retry
     end
 
-    raise
+    raise e
   end
 
   def pool
@@ -69,5 +69,11 @@ class Throttler
 
   def extend_key_duration
     redis.psetex(burst_key, (options[:interval] + 1) * options[:burst] * 1000, true)
+  end
+
+  def constantize(str)
+    str.split('::').inject(Object) do |mod, class_name|
+      mod.const_get(class_name)
+    end
   end
 end
