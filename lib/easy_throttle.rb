@@ -3,7 +3,7 @@
 require 'yaml'
 require 'redis'
 
-class Throttler
+class EasyThrottle
   DEFAULT_OPTIONS = { interval: 60, limit: 1, burst: 20 }.freeze
   LIMITS = {
   #   'endpointName' => { interval: 10, limit: 1, burst: 1 },
