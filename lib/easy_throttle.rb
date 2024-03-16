@@ -1,24 +1,19 @@
 # frozen_string_literal: true
 
-require 'yaml'
 require 'redis'
 
 class EasyThrottle
   DEFAULT_OPTIONS = { interval: 60, limit: 1, burst: 20 }.freeze
-  LIMITS = {
-  #   'endpointName' => { interval: 10, limit: 1, burst: 1 },
-  }.freeze
 
   def self.with_throttling(endpoint, prefix, options = DEFAULT_OPTIONS, &block)
     new(endpoint, prefix, options).with_throttling { block.call }
   end
 
   def initialize(endpoint, prefix, options = DEFAULT_OPTIONS)
-    @config = YAML.load_file('lib/config.yml')
     @endpoint = endpoint
     @prefix = prefix
     @redis = Redis.new
-    @options = LIMITS.fetch(endpoint, options)
+    @options = EasyThrottle.configuration.limits.fetch(endpoint, options)
   end
 
   def with_throttling(&block)
@@ -34,7 +29,7 @@ class EasyThrottle
       end
     end
     result
-  rescue StandardError => e
+  rescue EasyThrottle.configuration.errors => e
     if e.code == 429
       extend_key_duration
       retry
@@ -46,7 +41,7 @@ class EasyThrottle
       retry
     end
 
-    raise e
+    raise EasyThrottle::Error.new(msg: e.message, error: e)
   end
 
   def pool
@@ -69,11 +64,5 @@ class EasyThrottle
 
   def extend_key_duration
     redis.psetex(burst_key, (options[:interval] + 1) * options[:burst] * 1000, true)
-  end
-
-  def constantize(str)
-    str.split('::').inject(Object) do |mod, class_name|
-      mod.const_get(class_name)
-    end
   end
 end
