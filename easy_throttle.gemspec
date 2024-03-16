@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.summary     = "Allows you to throttle requests to an API."
   s.licenses    = ['MIT']
   
-  s.add_runtime_dependency 'redis', '>= 4.0'
+  s.add_runtime_dependency 'redis', '~> 4.0'
   
   s.files       = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
